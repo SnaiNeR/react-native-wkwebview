@@ -197,6 +197,8 @@ class WKWebView extends React.Component {
     bounces: PropTypes.bool,
     scrollEnabled: PropTypes.bool,
     allowsBackForwardNavigationGestures: PropTypes.bool,
+    allowsInlineMediaPlayback: PropTypes.bool,
+    mediaPlaybackRequiresUserAction: PropTypes.bool,
     automaticallyAdjustContentInsets: PropTypes.bool,
     contentInset: EdgeInsetsPropType,
     onNavigationStateChange: PropTypes.func,
@@ -357,6 +359,10 @@ class WKWebView extends React.Component {
         hideKeyboardAccessoryView={this.props.hideKeyboardAccessoryView}
         keyboardDisplayRequiresUserAction={this.props.keyboardDisplayRequiresUserAction}
         allowsLinkPreview={this.props.allowsLinkPreview}
+        allowsInlineMediaPlayback={this.props.allowsInlineMediaPlayback}
+        mediaPlaybackRequiresUserAction={
+          this.props.mediaPlaybackRequiresUserAction
+        }
         onLoadingStart={this._onLoadingStart}
         onLoadingFinish={this._onLoadingFinish}
         onLoadingError={this._onLoadingError}
