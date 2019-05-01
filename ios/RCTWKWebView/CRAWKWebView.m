@@ -14,6 +14,8 @@
 
 #import <objc/runtime.h>
 
+static NSTimer *keyboardTimer;
+
 // runtime trick to remove WKWebView keyboard default toolbar
 // see: http://stackoverflow.com/questions/19033292/ios-7-uiwebview-keyboard-issue/19042279#19042279
 @interface _SwizzleHelperWK : NSObject @end
@@ -97,7 +99,48 @@ RCT_NOT_IMPLEMENTED(- (instancetype)initWithCoder:(NSCoder *)aDecoder)
     [_webView addObserver:self forKeyPath:@"estimatedProgress" options:NSKeyValueObservingOptionNew context:nil];
     [self addSubview:_webView];
   }
+
+  // Workaround for a keyboard dismissal bug present in iOS 12
+  // https://openradar.appspot.com/radar?id=5018321736957952
+  if (@available(iOS 12.0, *)) {
+    [[NSNotificationCenter defaultCenter]
+      addObserver:self
+      selector:@selector(keyboardWillHide)
+      name:UIKeyboardWillHideNotification object:nil];
+    [[NSNotificationCenter defaultCenter]
+      addObserver:self
+      selector:@selector(keyboardWillShow)
+      name:UIKeyboardWillShowNotification object:nil];
+  }
+
   return self;
+}
+
+-(void)keyboardWillHide
+{
+    keyboardTimer = [NSTimer scheduledTimerWithTimeInterval:0 target:self selector:@selector(keyboardDisplacementFix) userInfo:nil repeats:false];
+    [[NSRunLoop mainRunLoop] addTimer:keyboardTimer forMode:NSRunLoopCommonModes];
+}
+-(void)keyboardWillShow
+{
+    if (keyboardTimer != nil) {
+        [keyboardTimer invalidate];
+    }
+}
+-(void)keyboardDisplacementFix
+{
+    // Additional viewport checks to prevent unintentional scrolls
+    UIScrollView *scrollView = self.webView.scrollView;
+    double maxContentOffset = scrollView.contentSize.height - scrollView.frame.size.height;
+    if (maxContentOffset < 0) {
+        maxContentOffset = 0;
+    }
+    if (scrollView.contentOffset.y > maxContentOffset) {
+      // https://stackoverflow.com/a/9637807/824966
+      [UIView animateWithDuration:.25 animations:^{
+          scrollView.contentOffset = CGPointMake(0, maxContentOffset);
+      }];
+    }
 }
 
 - (void)setInjectJavaScript:(NSString *)injectJavaScript {
